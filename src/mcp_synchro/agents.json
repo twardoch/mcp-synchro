@@ -1,0 +1,429 @@
+{
+  "agents": {
+    "5ire": {
+      "name": "5ire",
+      "description": "5ire AI assistant",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/5ire/mcp.json",
+        "win32": "%APPDATA%/5ire/mcp.json",
+        "linux": "~/.config/5ire/mcp.json"
+      }
+    },
+    "ai-panel": {
+      "name": "AI Panel",
+      "description": "AI Panel by Omata",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/io-omata-ai-panel/mcp/mcp.json",
+        "win32": "%APPDATA%/io-omata-ai-panel/mcp/mcp.json",
+        "linux": "~/.config/io-omata-ai-panel/mcp/mcp.json"
+      }
+    },
+    "ai-panel-idsn": {
+      "name": "AI Panel IDSN",
+      "description": "AI Panel IDSN by Omata",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/io-omata-ai-panel-idsn/mcp/mcp.json",
+        "win32": "%APPDATA%/io-omata-ai-panel-idsn/mcp/mcp.json",
+        "linux": "~/.config/io-omata-ai-panel-idsn/mcp/mcp.json"
+      }
+    },
+    "amp": {
+      "name": "Amp",
+      "description": "Amp AI coding agent (settings file)",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "mcp_wrapper_key": "amp",
+      "paths": {
+        "darwin": "~/.config/amp/settings.json",
+        "win32": "%USERPROFILE%/.config/amp/settings.json",
+        "linux": "~/.config/amp/settings.json"
+      }
+    },
+    "augment": {
+      "name": "Augment",
+      "description": "Augment Code AI",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.augment/settings.json",
+        "win32": "%USERPROFILE%/.augment/settings.json",
+        "linux": "~/.augment/settings.json"
+      }
+    },
+    "boltai": {
+      "name": "BoltAI",
+      "description": "BoltAI macOS app",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.boltai/mcp.json",
+        "win32": "%USERPROFILE%/.boltai/mcp.json",
+        "linux": "~/.boltai/mcp.json"
+      }
+    },
+    "claude-code": {
+      "name": "Claude Code",
+      "description": "Anthropic Claude Code CLI",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.claude.json",
+        "win32": "%USERPROFILE%/.claude.json",
+        "linux": "~/.claude.json"
+      }
+    },
+    "claude-desktop": {
+      "name": "Claude Desktop",
+      "description": "Anthropic Claude Desktop application",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Claude/claude_desktop_config.json",
+        "win32": "%APPDATA%/Claude/claude_desktop_config.json",
+        "linux": "~/.config/Claude/claude_desktop_config.json"
+      }
+    },
+    "cline-vscode": {
+      "name": "Cline (VS Code)",
+      "description": "Cline extension for VS Code",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json",
+        "win32": "%APPDATA%/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json",
+        "linux": "~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json"
+      }
+    },
+    "codex": {
+      "name": "Codex CLI",
+      "description": "OpenAI Codex CLI (TOML config)",
+      "config_format": "toml",
+      "mcp_key": "mcp_servers",
+      "paths": {
+        "darwin": "~/.codex/config.toml",
+        "win32": "%USERPROFILE%/.codex/config.toml",
+        "linux": "~/.codex/config.toml"
+      }
+    },
+    "continue": {
+      "name": "Continue",
+      "description": "Continue VS Code extension",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "server_format": "array",
+      "paths": {
+        "darwin": "~/.continue/config.json",
+        "win32": "~/.continue/config.json",
+        "linux": "~/.continue/config.json"
+      }
+    },
+    "copilot-cli": {
+      "name": "GitHub Copilot CLI",
+      "description": "GitHub Copilot CLI MCP settings",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.copilot/mcp-config.json",
+        "win32": "%USERPROFILE%/.copilot/mcp-config.json",
+        "linux": "~/.copilot/mcp-config.json"
+      }
+    },
+    "crush": {
+      "name": "Crush",
+      "description": "Crush AI terminal assistant",
+      "config_format": "json",
+      "mcp_key": "mcp",
+      "paths": {
+        "darwin": "~/.config/crush/crush.json",
+        "win32": "%USERPROFILE%/.config/crush/crush.json",
+        "linux": "~/.config/crush/crush.json"
+      }
+    },
+    "cursor": {
+      "name": "Cursor",
+      "description": "Cursor AI code editor",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.cursor/mcp.json",
+        "win32": "%USERPROFILE%/.cursor/mcp.json",
+        "linux": "~/.cursor/mcp.json"
+      }
+    },
+    "gemini-cli": {
+      "name": "Gemini CLI",
+      "description": "Google Gemini CLI",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.gemini/settings.json",
+        "win32": "%USERPROFILE%/.gemini/settings.json",
+        "linux": "~/.gemini/settings.json"
+      }
+    },
+    "jan": {
+      "name": "Jan",
+      "description": "Jan AI assistant",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/jan/mcp_config.json",
+        "win32": "%USERPROFILE%/jan/mcp_config.json",
+        "linux": "~/jan/mcp_config.json"
+      }
+    },
+    "kilo-antigravity": {
+      "name": "Kilo Code (Antigravity)",
+      "description": "Kilo Code extension for Antigravity",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Antigravity/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Antigravity/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "linux": "~/.config/Antigravity/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json"
+      }
+    },
+    "kilo-cli": {
+      "name": "Kilo Code CLI",
+      "description": "Kilo Code CLI MCP settings",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.kilocode/cli/global/settings/mcp_settings.json",
+        "win32": "%USERPROFILE%/.kilocode/cli/global/settings/mcp_settings.json",
+        "linux": "~/.kilocode/cli/global/settings/mcp_settings.json"
+      }
+    },
+    "kilo-cursor": {
+      "name": "Kilo Code (Cursor)",
+      "description": "Kilo Code extension for Cursor",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Cursor/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Cursor/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "linux": "~/.config/Cursor/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json"
+      }
+    },
+    "kilo-trae": {
+      "name": "Kilo Code (Trae)",
+      "description": "Kilo Code extension for Trae",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Trae/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Trae/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "linux": "~/.config/Trae/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json"
+      }
+    },
+    "kilo-vscode": {
+      "name": "Kilo Code (VS Code)",
+      "description": "Kilo Code extension for VS Code",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Code/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Code/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "linux": "~/.config/Code/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json"
+      }
+    },
+    "kilo-vscode-insiders": {
+      "name": "Kilo Code (VS Code Insiders)",
+      "description": "Kilo Code extension for VS Code Insiders",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Code - Insiders/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Code - Insiders/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "linux": "~/.config/Code - Insiders/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json"
+      }
+    },
+    "kilo-windsurf": {
+      "name": "Kilo Code (Windsurf)",
+      "description": "Kilo Code extension for Windsurf",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Windsurf/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Windsurf/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+        "linux": "~/.config/Windsurf/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json"
+      }
+    },
+    "mate": {
+      "name": "MATE",
+      "description": "MATE AI assistant",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/MATE/MATE PS Data/mcp/mcp.json",
+        "win32": "%APPDATA%/MATE/MATE PS Data/mcp/mcp.json",
+        "linux": "~/.config/MATE/MATE PS Data/mcp/mcp.json"
+      }
+    },
+    "mcp-sync": {
+      "name": "MCP Sync",
+      "description": "MCP Sync global config",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/mcp-sync/global.json",
+        "win32": "%APPDATA%/mcp-sync/global.json",
+        "linux": "~/.config/mcp-sync/global.json"
+      }
+    },
+    "opencode": {
+      "name": "OpenCode",
+      "description": "OpenCode AI terminal assistant",
+      "config_format": "json",
+      "mcp_key": "mcp",
+      "command_as_array": true,
+      "env_key": "environment",
+      "paths": {
+        "darwin": "~/.config/opencode/opencode.json",
+        "win32": "%USERPROFILE%/.config/opencode/opencode.json",
+        "linux": "~/.config/opencode/opencode.json"
+      }
+    },
+    "qwen": {
+      "name": "Qwen Code",
+      "description": "Qwen Code CLI",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.qwen/settings.json",
+        "win32": "%USERPROFILE%/.qwen/settings.json",
+        "linux": "~/.qwen/settings.json"
+      }
+    },
+    "roo-antigravity": {
+      "name": "Roo Code (Antigravity)",
+      "description": "Roo Code extension for Antigravity",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Antigravity/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Antigravity/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "linux": "~/.config/Antigravity/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"
+      }
+    },
+    "roo-cursor": {
+      "name": "Roo Code (Cursor)",
+      "description": "Roo Code extension for Cursor",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Cursor/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Cursor/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "linux": "~/.config/Cursor/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"
+      }
+    },
+    "roo-trae": {
+      "name": "Roo Code (Trae)",
+      "description": "Roo Code extension for Trae",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Trae/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Trae/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "linux": "~/.config/Trae/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"
+      }
+    },
+    "roo-vscode": {
+      "name": "Roo Code (VS Code)",
+      "description": "Roo Code extension for VS Code",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "linux": "~/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"
+      }
+    },
+    "roo-vscode-insiders": {
+      "name": "Roo Code (VS Code Insiders)",
+      "description": "Roo Code extension for VS Code Insiders",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Code - Insiders/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Code - Insiders/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "linux": "~/.config/Code - Insiders/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"
+      }
+    },
+    "roo-windsurf": {
+      "name": "Roo Code (Windsurf)",
+      "description": "Roo Code extension for Windsurf",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Windsurf/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "win32": "%APPDATA%/Windsurf/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+        "linux": "~/.config/Windsurf/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"
+      }
+    },
+    "trae": {
+      "name": "Trae",
+      "description": "Bytedance Trae editor",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Trae/User/mcp.json",
+        "win32": "%APPDATA%/Trae/User/mcp.json",
+        "linux": "~/.config/Trae/User/mcp.json"
+      }
+    },
+    "vscode": {
+      "name": "VS Code",
+      "description": "Visual Studio Code MCP settings",
+      "config_format": "json",
+      "mcp_key": "servers",
+      "mcp_wrapper_key": "mcp",
+      "paths": {
+        "darwin": "~/.vscode/mcp.json",
+        "win32": "%APPDATA%/Code/User/mcp.json",
+        "linux": "~/.vscode/mcp.json"
+      }
+    },
+    "vscode-insiders": {
+      "name": "VS Code Insiders",
+      "description": "Visual Studio Code Insiders MCP settings",
+      "config_format": "json",
+      "mcp_key": "servers",
+      "paths": {
+        "darwin": "~/Library/Application Support/Code - Insiders/User/mcp.json",
+        "win32": "%APPDATA%/Code - Insiders/User/mcp.json",
+        "linux": "~/.config/Code - Insiders/User/mcp.json"
+      }
+    },
+    "vtcode": {
+      "name": "VTCode",
+      "description": "VTCode AI terminal editor",
+      "config_format": "toml",
+      "mcp_key": "providers",
+      "mcp_wrapper_key": "mcp",
+      "server_format": "array",
+      "paths": {
+        "darwin": "~/.vtcode/vtcode.toml",
+        "win32": "%USERPROFILE%/.vtcode/vtcode.toml",
+        "linux": "~/.vtcode/vtcode.toml"
+      }
+    },
+    "windsurf": {
+      "name": "Windsurf",
+      "description": "Codeium Windsurf editor",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.codeium/windsurf/mcp_config.json",
+        "win32": "%USERPROFILE%/.codeium/windsurf/mcp_config.json",
+        "linux": "~/.codeium/windsurf/mcp_config.json"
+      }
+    }
+  }
+}
