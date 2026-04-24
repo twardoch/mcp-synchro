@@ -1,0 +1,103 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777046712449,
+  "projectRoot": "/Users/adam/Developer/vcs3/github.twardoch/pub/mcp-synchro",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Python",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "pyproject.toml"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "pytest",
+        "version": null,
+        "category": "testing"
+      }
+    ],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": "pytest",
+    "lintCommand": "ruff check",
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src",
+      "tests"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "_private": {
+      "path": "_private",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1777046712444,
+      "keyFiles": [
+        "Untitled",
+        "llmgrade"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 2,
+      "lastAccessed": 1777046712444,
+      "keyFiles": [
+        "mcp_synchro-1.0.3.dev1+gdceb93ea1-py3-none-any.whl",
+        "mcp_synchro-1.0.3.dev1+gdceb93ea1.tar.gz"
+      ]
+    },
+    "issues": {
+      "path": "issues",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1777046712444,
+      "keyFiles": [
+        "101.md",
+        "102.md"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1777046712444,
+      "keyFiles": []
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 2,
+      "lastAccessed": 1777046712444,
+      "keyFiles": [
+        "__init__.py",
+        "test_all.py"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}
