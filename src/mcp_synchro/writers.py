@@ -1,9 +1,11 @@
 # this_file: src/mcp_synchro/writers.py
-"""Writes config files. JSON, TOML, we don\'t judge."""
+"""Writes config files. JSON, TOML, we don't judge."""
 
 from __future__ import annotations
 
 import json
+import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +32,7 @@ def write_toml(path: Path, data: dict[str, Any]) -> None:
 
 
 def _to_opencode_server(data: dict[str, Any]) -> dict[str, Any]:
-    """Translates standard MCP back into OpenCode\'s weird dialect.
+    """Translates standard MCP back into OpenCode's weird dialect.
 
     We pack `command` and `args` back into a single array, rename `env` to `environment`,
     and call `stdio` `local`.
@@ -41,6 +43,8 @@ def _to_opencode_server(data: dict[str, Any]) -> dict[str, Any]:
     args = result.pop("args", [])
     if cmd:
         result["command"] = [cmd] + (args or [])
+        result["enabled"] = True
+        result["type"] = "local"
     # Convert "env" to "environment"
     if "env" in result:
         result["environment"] = result.pop("env")
@@ -64,10 +68,96 @@ def _dict_to_array(servers: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def _normalize_for_agent(
+    server_dict: dict[str, Any],
+    agent: AgentDef,
+    resolve_commands: bool = True,
+) -> dict[str, Any]:
+    """Applies all agent-specific mappings and conventions."""
+    mutated = dict(server_dict)
+
+    # 1. Resolve path/command on macOS GUI if enabled
+    if (
+        resolve_commands
+        and sys.platform == "darwin"
+        and agent.id in ("antigravity-desktop", "antigravity-ide")
+    ):
+        cmd = mutated.get("command")
+        if cmd and not cmd.startswith(("/", ".")):
+            # Detect commands likely not in /usr/bin or /usr/local/bin
+            targets = {
+                "npx",
+                "uvx",
+                "bunx",
+                "python3",
+                "python",
+                "node",
+                "npm",
+                "bun",
+                "deno",
+            }
+            if cmd in targets:
+                resolved = shutil.which(cmd)
+                if resolved:
+                    mutated["command"] = resolved
+                    logger.warning(
+                        f"Auto-resolved command '{cmd}' to absolute path '{resolved}' for agent '{agent.id}' to bypass macOS GUI PATH bug. "
+                        "If you experience issues, consider launching the GUI app from the terminal."
+                    )
+
+    # 2. OpenCode normalization
+    if agent.id == "opencode":
+        return _to_opencode_server(mutated)
+
+    # 3. Handle key naming per agent settings
+    if agent.remote_url_key == "serverUrl":
+        if mutated.get("url"):
+            mutated["serverUrl"] = mutated["url"]
+        mutated.pop("url", None)
+        mutated.pop("httpUrl", None)
+        if agent.transport_indicator == "implicit":
+            mutated.pop("type", None)
+            mutated.pop("transport", None)
+
+    elif agent.remote_url_key == "httpUrl":
+        transport_val = mutated.get("transport") or mutated.get("type")
+        is_sse = transport_val in ("sse", "websocket")
+        if mutated.get("url"):
+            if is_sse:
+                mutated["url"] = mutated["url"]
+                mutated.pop("httpUrl", None)
+            else:
+                mutated["httpUrl"] = mutated["url"]
+                mutated.pop("url", None)
+        mutated.pop("serverUrl", None)
+        if agent.transport_indicator == "implicit":
+            mutated.pop("type", None)
+            mutated.pop("transport", None)
+
+    else:  # remote_url_key == "url" (default)
+        if mutated.get("url"):
+            mutated["url"] = mutated["url"]
+        mutated.pop("serverUrl", None)
+        mutated.pop("httpUrl", None)
+        if agent.transport_indicator == "implicit":
+            mutated.pop("type", None)
+            mutated.pop("transport", None)
+
+    # 4. Cursor streamable-http guardrail
+    if agent.id == "cursor":
+        transport_val = mutated.get("transport") or mutated.get("type")
+        if transport_val in ("http", "streamable-http", "streamablehttp"):
+            mutated["type"] = "http"
+            mutated.pop("transport", None)
+
+    return mutated
+
+
 def update_mcp_servers(
     data: dict[str, Any],
     mcp_config: McpServersConfig,
     agent: AgentDef,
+    resolve_commands: bool = True,
 ) -> dict[str, Any]:
     """Surgically replaces the MCP chunk of a config without breaking the rest of it.
 
@@ -75,6 +165,7 @@ def update_mcp_servers(
         data: The whole enchilada (the raw file contents).
         mcp_config: Our fresh, shiny MCP servers.
         agent: The rules dictating where and how to shove the servers in.
+        resolve_commands: Auto-resolve stdio executable commands to absolute paths.
 
     Returns:
         A frankenstein dictionary ready to be written to disk.
@@ -87,12 +178,13 @@ def update_mcp_servers(
     else:
         new_servers = mcp_config.to_dict()
 
-    # Handle special formats
-    if agent.command_as_array:
-        new_servers = {
-            name: _to_opencode_server(cfg) if isinstance(cfg, dict) else cfg
-            for name, cfg in new_servers.items()
-        }
+    # Normalize per agent
+    new_servers = {
+        name: _normalize_for_agent(cfg, agent, resolve_commands)
+        if isinstance(cfg, dict)
+        else cfg
+        for name, cfg in new_servers.items()
+    }
 
     if agent.server_format == "array":
         new_servers_data: dict[str, Any] | list[dict[str, Any]] = _dict_to_array(
@@ -117,11 +209,12 @@ def write_agent_config(
     data: dict[str, Any],
     mcp_config: McpServersConfig,
     agent: AgentDef,
+    resolve_commands: bool = True,
 ) -> None:
     """Writes the updated config to disk. Safely.
 
     We take the raw data we read earlier, splice in our updated MCP servers,
-    and write it back in the native format (JSON or TOML). The agent\'s other
+    and write it back in the native format (JSON or TOML). The agent's other
     settings remain untouched.
 
     Args:
@@ -129,8 +222,9 @@ def write_agent_config(
         data: The raw baseline data.
         mcp_config: The new MCP configuration payload.
         agent: The agent definition mapping the rules.
+        resolve_commands: Auto-resolve stdio executable commands to absolute paths.
     """
-    updated = update_mcp_servers(data, mcp_config, agent)
+    updated = update_mcp_servers(data, mcp_config, agent, resolve_commands)
 
     if agent.is_toml:
         write_toml(path, updated)

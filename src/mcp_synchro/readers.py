@@ -71,6 +71,14 @@ def extract_mcp_servers(
     it in `"mcp": {"servers": ...}`. Codex uses TOML snake_case. This function follows the
     map defined in the `AgentDef` to find the treasure.
     """
+    if agent.id == "codex":
+        mcp = data.get("mcp")
+        if isinstance(mcp, dict) and "servers" in mcp:
+            logger.warning(
+                "Found 'mcp.servers' table in Codex config. "
+                "This is almost certainly broken. Codex CLI expects '[mcp_servers]'."
+            )
+
     # If there's a wrapper key (e.g., VS Code's "mcp" -> "servers")
     if agent.mcp_wrapper_key:
         wrapper = data.get(agent.mcp_wrapper_key)

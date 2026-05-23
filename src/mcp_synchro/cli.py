@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 
 import fire  # type: ignore[import-untyped]
@@ -67,12 +68,26 @@ class McpSynchroCLI:
     push it, and Claude, Cursor, Codex, and 20+ other agents instantly know about it.
     """
 
-    def push(self, dry_run: bool = False, verbose: bool = False) -> None:
+    def push(
+        self,
+        *agents: str,
+        workspace: str | None = None,
+        dry_run: bool = False,
+        verbose: bool = False,
+        probe_tools: bool = False,
+        no_resolve_commands: bool = False,
+        validate: bool = False,
+    ) -> None:
         """Stamps your master config onto every AI agent installed on your machine.
 
         Args:
-            dry_run: Look but don\'t touch. We print what would happen without modifying files.
+            *agents: Specific agent ID(s) or name(s) to target.
+            workspace: Path to a project workspace to sync a project-level configuration.
+            dry_run: Look but don't touch. We print what would happen without modifying files.
             verbose: Print verbose debug logs.
+            probe_tools: Verify that stdio servers do not exceed the tool limit before pushing.
+            no_resolve_commands: Do not resolve executable commands on macOS to absolute paths.
+            validate: Run post-write validation commands for updated agents.
         """
         _configure_logging(verbose)
         sot_path = get_sot_path()
@@ -81,21 +96,63 @@ class McpSynchroCLI:
         if dry_run:
             console.print("[yellow]Dry run mode - no changes will be made[/yellow]\n")
 
-        results = _push(dry_run=dry_run)
-        _print_results(results, "Push Results")
+        agent_list = list(agents) if agents else None
+        resolve_commands = not no_resolve_commands
 
-    def sync(self, dry_run: bool = False, verbose: bool = False) -> None:
+        try:
+            results = _push(
+                agents=agent_list,
+                workspace=workspace,
+                dry_run=dry_run,
+                resolve_commands=resolve_commands,
+                probe_tools=probe_tools,
+            )
+            _print_results(results, "Push Results")
+
+            if validate and not dry_run:
+                console.print("\n[cyan]Running validation check...[/cyan]")
+                self.doctor(agents=agent_list, verbose=verbose)
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+            sys.exit(1)
+
+    def sync(
+        self,
+        *agents: str,
+        workspace: str | None = None,
+        dry_run: bool = False,
+        verbose: bool = False,
+        probe_tools: bool = False,
+        no_resolve_commands: bool = False,
+        validate: bool = False,
+    ) -> None:
         """Alias for `push`. Stamps your master config onto the agents."""
-        self.push(dry_run=dry_run, verbose=verbose)
+        self.push(
+            *agents,
+            workspace=workspace,
+            dry_run=dry_run,
+            verbose=verbose,
+            probe_tools=probe_tools,
+            no_resolve_commands=no_resolve_commands,
+            validate=validate,
+        )
 
-    def pull_new(self, dry_run: bool = False, verbose: bool = False) -> None:
+    def pull_new(
+        self,
+        *agents: str,
+        workspace: str | None = None,
+        dry_run: bool = False,
+        verbose: bool = False,
+    ) -> None:
         """Scavenges for new servers.
 
         Did you manually install a server directly into Cursor? This command finds it,
         extracts it, and adds it to your master `mcp.json` file.
 
         Args:
-            dry_run: Look but don\'t touch.
+            *agents: Specific agent ID(s) or name(s) to target.
+            workspace: Path to a project workspace to sync a project-level configuration.
+            dry_run: Look but don't touch.
             verbose: Print verbose debug logs.
         """
         _configure_logging(verbose)
@@ -105,16 +162,34 @@ class McpSynchroCLI:
         if dry_run:
             console.print("[yellow]Dry run mode - no changes will be made[/yellow]\n")
 
-        results = _pull_new(dry_run=dry_run)
-        _print_results(results, "Pull New Results")
+        agent_list = list(agents) if agents else None
 
-    def pull_all(self, dry_run: bool = False, verbose: bool = False) -> None:
+        try:
+            results = _pull_new(
+                agents=agent_list,
+                workspace=workspace,
+                dry_run=dry_run,
+            )
+            _print_results(results, "Pull New Results")
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+            sys.exit(1)
+
+    def pull_all(
+        self,
+        *agents: str,
+        workspace: str | None = None,
+        dry_run: bool = False,
+        verbose: bool = False,
+    ) -> None:
         """The nuclear option. Rebuilds the master config from scratch.
 
         Scans every agent, extracts every server, and merges them into a brand new `mcp.json`.
 
         Args:
-            dry_run: Look but don\'t touch.
+            *agents: Specific agent ID(s) or name(s) to target.
+            workspace: Path to a project workspace to sync a project-level configuration.
+            dry_run: Look but don't touch.
             verbose: Print verbose debug logs.
         """
         _configure_logging(verbose)
@@ -124,15 +199,31 @@ class McpSynchroCLI:
         if dry_run:
             console.print("[yellow]Dry run mode - no changes will be made[/yellow]\n")
 
-        results = _pull_all(dry_run=dry_run)
-        _print_results(results, "Pull All Results")
+        agent_list = list(agents) if agents else None
 
-        sot = load_sot()
-        console.print(f"\n[green]SoT now has {len(sot.servers)} server(s)[/green]")
+        try:
+            results = _pull_all(
+                agents=agent_list,
+                workspace=workspace,
+                dry_run=dry_run,
+            )
+            _print_results(results, "Pull All Results")
 
-    def init(self, dry_run: bool = False, verbose: bool = False) -> None:
+            sot = load_sot()
+            console.print(f"\n[green]SoT now has {len(sot.servers)} server(s)[/green]")
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+            sys.exit(1)
+
+    def init(
+        self,
+        *agents: str,
+        workspace: str | None = None,
+        dry_run: bool = False,
+        verbose: bool = False,
+    ) -> None:
         """Alias for `pull_all`. Use this when starting fresh."""
-        self.pull_all(dry_run=dry_run, verbose=verbose)
+        self.pull_all(*agents, workspace=workspace, dry_run=dry_run, verbose=verbose)
 
     def list(self, verbose: bool = False) -> None:
         """Shows a roster of every AI agent we know about, and whether they exist on your machine.
@@ -223,6 +314,191 @@ class McpSynchroCLI:
         _configure_logging(verbose)
         sot = load_sot()
         print(json.dumps({"mcpServers": sot.to_dict()}, indent=2, ensure_ascii=False))
+
+    def migrate(self, source_agent: str, to: str) -> None:
+        """Migrates configurations from one agent to another (one-shot).
+
+        Args:
+            source_agent: The name or ID of the legacy agent.
+            to: The name or ID of the successor agent.
+        """
+        # Load agent definitions
+        user_agents = get_user_agents_path()
+        agent_defs = load_all_agent_defs(
+            user_agents_path=user_agents if user_agents.exists() else None
+        )
+
+        source = next(
+            (a for a in agent_defs if a.id == source_agent or a.name == source_agent),
+            None,
+        )
+        target = next((a for a in agent_defs if a.id == to or a.name == to), None)
+
+        if not source:
+            console.print(f"[red]Error: Source agent '{source_agent}' not found.[/red]")
+            sys.exit(1)
+        if not target:
+            console.print(f"[red]Error: Target agent '{to}' not found.[/red]")
+            sys.exit(1)
+
+        source_path = source.resolve_path()
+        target_path = target.resolve_path()
+
+        if not source_path or not source_path.exists():
+            console.print(
+                f"[yellow]No legacy config file found for {source.name} at {source_path}. Nothing to migrate.[/yellow]"
+            )
+            return
+
+        console.print(
+            f"[cyan]Migrating {source.name} ({source_path}) -> {target.name} ({target_path})...[/cyan]"
+        )
+
+        try:
+            from mcp_synchro.readers import read_agent_config
+            from mcp_synchro.writers import write_agent_config
+
+            _, mcp_config = read_agent_config(source_path, source)
+            if not mcp_config or not mcp_config.servers:
+                console.print(
+                    f"[yellow]No MCP servers found in legacy config {source_path}.[/yellow]"
+                )
+                return
+
+            target_data = {}
+            if target_path and target_path.exists():
+                try:
+                    from mcp_synchro.readers import read_json, read_toml
+
+                    if target.is_toml:
+                        target_data = read_toml(target_path)
+                    else:
+                        target_data = read_json(target_path)
+                except Exception:
+                    pass
+
+            if target_path:
+                write_agent_config(target_path, target_data, mcp_config, target)
+                console.print(
+                    f"[green]Successfully migrated {len(mcp_config.servers)} servers to {target.name} at {target_path}.[/green]"
+                )
+
+                backup_path = source_path.with_suffix(".backup")
+                source_path.rename(backup_path)
+                console.print(f"[dim]Legacy config backed up to {backup_path}[/dim]")
+            else:
+                console.print(
+                    f"[red]Error: Could not resolve path for target agent {target.name}.[/red]"
+                )
+                sys.exit(1)
+
+        except Exception as e:
+            console.print(f"[red]Migration failed: {e}[/red]")
+            sys.exit(1)
+
+    def doctor(self, agents: list[str] | None = None, verbose: bool = False) -> None:
+        """Runs each agent's validation command to report health and configuration status.
+
+        Args:
+            agents: Specific agent ID(s) to check. If None, checks all installed/supported agents.
+            verbose: Print verbose output.
+        """
+        _configure_logging(verbose)
+        import subprocess
+
+        user_agents = get_user_agents_path()
+        agent_defs = load_all_agent_defs(
+            user_agents_path=user_agents if user_agents.exists() else None
+        )
+
+        if agents:
+            agent_defs = [a for a in agent_defs if a.id in agents or a.name in agents]
+
+        table = Table(title="MCP Synchro Doctor Report")
+        table.add_column("Agent", style="cyan")
+        table.add_column("Validation Command", style="yellow")
+        table.add_column("Status", style="bold")
+        table.add_column("Details")
+
+        for agent in agent_defs:
+            path = agent.resolve_path()
+            if not path or not path.exists():
+                continue
+
+            if not agent.post_write_validate_cmd:
+                table.add_row(
+                    agent.name,
+                    "-",
+                    "[yellow]No validation cmd[/yellow]",
+                    "Skips validation",
+                )
+                continue
+
+            cmd = agent.post_write_validate_cmd
+            cmd_str = " ".join(cmd)
+            try:
+                binary = shutil.which(cmd[0])
+                if not binary:
+                    table.add_row(
+                        agent.name,
+                        cmd_str,
+                        "[red]Binary missing[/red]",
+                        f"Executable '{cmd[0]}' not in PATH",
+                    )
+                    continue
+
+                full_cmd = [binary, *cmd[1:]]
+                proc = subprocess.run(
+                    full_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=5.0,
+                )
+                if proc.returncode == 0:
+                    output = proc.stdout.strip()
+                    details = output.replace("\n", " | ")[:60]
+                    table.add_row(agent.name, cmd_str, "[green]OK[/green]", details)
+                else:
+                    err_msg = (
+                        (proc.stderr or proc.stdout).strip().replace("\n", " | ")[:60]
+                    )
+                    table.add_row(
+                        agent.name,
+                        cmd_str,
+                        "[red]FAIL[/red]",
+                        f"Exit code {proc.returncode}: {err_msg}",
+                    )
+            except subprocess.TimeoutExpired:
+                table.add_row(
+                    agent.name,
+                    cmd_str,
+                    "[red]TIMEOUT[/red]",
+                    "Command timed out after 5 seconds",
+                )
+            except Exception as e:
+                table.add_row(agent.name, cmd_str, "[red]ERROR[/red]", str(e))
+
+        console.print(table)
+
+    def agy_sync(
+        self,
+        dry_run: bool = False,
+        verbose: bool = False,
+        probe_tools: bool = False,
+        no_resolve_commands: bool = False,
+        validate: bool = False,
+    ) -> None:
+        """Convenience command targeting the 3 Antigravity products at once."""
+        self.push(
+            "antigravity-desktop",
+            "antigravity-ide",
+            "antigravity-cli",
+            dry_run=dry_run,
+            verbose=verbose,
+            probe_tools=probe_tools,
+            no_resolve_commands=no_resolve_commands,
+            validate=validate,
+        )
 
 
 def main() -> None:

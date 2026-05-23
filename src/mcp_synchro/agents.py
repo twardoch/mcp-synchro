@@ -34,6 +34,17 @@ class AgentDef:
     command_as_array: bool = False  # OpenCode uses ["cmd", "arg1", ...] for command
     env_key: str | None = None  # OpenCode uses "environment" instead of "env"
     server_format: str = "dict"  # "dict" (default) or "array" (VTCode)
+    remote_url_key: str = "url"
+    auth_header_key: str = "headers"
+    transport_indicator: str = "explicit"
+    tools_per_server_limit: int | None = None
+    supports_workspace_scope: bool = False
+    workspace_config_path: str | None = None
+    post_write_validate_cmd: list[str] | None = None
+    deprecated: bool = False
+    deprecated_after: str | None = None
+    successor: str | None = None
+    migration_hint: str | None = None
 
     @property
     def is_toml(self) -> bool:
@@ -108,6 +119,19 @@ def parse_agent_defs(data: dict[str, Any]) -> list[AgentDef]:
                 command_as_array=agent_info.get("command_as_array", False),
                 env_key=agent_info.get("env_key"),
                 server_format=agent_info.get("server_format", "dict"),
+                remote_url_key=agent_info.get("remote_url_key", "url"),
+                auth_header_key=agent_info.get("auth_header_key", "headers"),
+                transport_indicator=agent_info.get("transport_indicator", "explicit"),
+                tools_per_server_limit=agent_info.get("tools_per_server_limit"),
+                supports_workspace_scope=agent_info.get(
+                    "supports_workspace_scope", False
+                ),
+                workspace_config_path=agent_info.get("workspace_config_path"),
+                post_write_validate_cmd=agent_info.get("post_write_validate_cmd"),
+                deprecated=agent_info.get("deprecated", False),
+                deprecated_after=agent_info.get("deprecated_after"),
+                successor=agent_info.get("successor"),
+                migration_hint=agent_info.get("migration_hint"),
             )
         )
     return result

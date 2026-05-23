@@ -54,6 +54,10 @@ class McpServer(BaseModel):
     name: str | None = None
     headers: dict[str, str] | None = None  # HTTP headers (distinct from httpHeaders)
 
+    # Google Credentials & Enterprise OAuth Blocks (2026 Specs)
+    authProviderType: str | None = None  # e.g., "google_credentials"
+    oauth: dict[str, Any] | None = None  # DCR / Manual Client Structures
+
     # Transport type (alternative to `type` field used by some agents)
     # Values: stdio, sse, streamable-http, streamableHttp
     transport: str | None = None
@@ -101,6 +105,62 @@ class McpServer(BaseModel):
     watchPaths: list[str] | None = None
     disabledTools: list[str] | None = None
     remoteConfigured: bool | None = None
+
+    @field_validator("transport", mode="before")
+    @classmethod
+    def validate_transport_field(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        v_str = str(v).lower()
+        if v_str in ("streamable-http", "streamablehttp"):
+            return "http"
+        return v_str
+
+    @model_validator(mode="before")
+    @classmethod
+    def canonicalize_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+
+        data = dict(data)
+
+        # Pull serverUrl / httpUrl into url
+        url = data.get("url")
+        server_url = data.get("serverUrl")
+        http_url = data.get("httpUrl")
+
+        if not url:
+            if server_url:
+                data["url"] = server_url
+                data["serverUrl"] = None
+            elif http_url:
+                data["url"] = http_url
+                data["httpUrl"] = None
+        else:
+            data["serverUrl"] = None
+            data["httpUrl"] = None
+
+        # Normalize transport
+        transport = data.get("transport")
+        if transport:
+            if isinstance(transport, str):
+                t_str = transport.lower()
+                if t_str in ("streamable-http", "streamablehttp"):
+                    data["transport"] = "http"
+                else:
+                    data["transport"] = t_str
+
+        # Normalize type
+        type_val = data.get("type")
+        if type_val:
+            if isinstance(type_val, str):
+                t_str = type_val.lower()
+                if t_str in ("streamable-http", "streamablehttp"):
+                    data["type"] = "http"
+                else:
+                    data["type"] = t_str
+
+        return data
 
     @model_validator(mode="after")
     def validate_transport(self) -> McpServer:

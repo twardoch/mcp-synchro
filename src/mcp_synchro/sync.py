@@ -9,7 +9,12 @@ from typing import Any
 
 from loguru import logger
 
-from mcp_synchro.agents import DiscoveredAgent, discover_agents, load_all_agent_defs
+from mcp_synchro.agents import (
+    AgentDef,
+    DiscoveredAgent,
+    discover_agents,
+    load_all_agent_defs,
+)
 from mcp_synchro.config import get_user_agents_path, load_sot, save_sot
 from mcp_synchro.models import McpServersConfig
 from mcp_synchro.readers import read_agent_config
@@ -36,18 +41,54 @@ def _get_discovered_agents() -> list[DiscoveredAgent]:
     return discover_agents(agent_defs)
 
 
-def push(dry_run: bool = False) -> list[SyncResult]:
+def _get_sync_targets(
+    agents: list[str] | None = None,
+    workspace: str | Path | None = None,
+) -> list[tuple[AgentDef, Path]]:
+    """Calculates agent definitions and target paths for the sync operation."""
+    if workspace is None:
+        discovered = _get_discovered_agents()
+        if agents:
+            discovered = [
+                da
+                for da in discovered
+                if da.agent.id in agents or da.agent.name in agents
+            ]
+        return [(da.agent, da.path) for da in discovered]
+
+    user_agents = get_user_agents_path()
+    agent_defs = load_all_agent_defs(
+        user_agents_path=user_agents if user_agents.exists() else None
+    )
+    if agents:
+        agent_defs = [a for a in agent_defs if a.id in agents or a.name in agents]
+
+    targets: list[tuple[AgentDef, Path]] = []
+    for agent in agent_defs:
+        if not agent.supports_workspace_scope:
+            if agents and agent.id in agents:
+                raise ValueError(
+                    f"✗ {agent.id} does not support workspace-level MCP config as of May 2026.\n"
+                    f"  Track https://github.com/google/antigravity/issues for status."
+                )
+            continue
+        if agent.workspace_config_path:
+            targets.append((agent, Path(workspace) / agent.workspace_config_path))
+    return targets
+
+
+def push(
+    agents: list[str] | None = None,
+    workspace: str | Path | None = None,
+    dry_run: bool = False,
+    resolve_commands: bool = True,
+    probe_tools: bool = False,
+) -> list[SyncResult]:
     """Stamps the Source of Truth onto every agent config we can find.
 
     We read `mcp.json` (the SoT), hunt down Claude, Cursor, Codex, etc.,
     and surgically overwrite their MCP sections. The rest of their configs
     (like UI settings or API keys) are safely ignored.
-
-    Args:
-        dry_run: Look, don\'t touch. If True, we log what we *would* do without writing files.
-
-    Returns:
-        A receipt for every agent we touched (or tried to).
     """
     results: list[SyncResult] = []
     sot = load_sot()
@@ -63,8 +104,12 @@ def push(dry_run: bool = False) -> list[SyncResult]:
             )
         ]
 
-    discovered = _get_discovered_agents()
-    if not discovered:
+    try:
+        targets = _get_sync_targets(agents, workspace)
+    except ValueError as e:
+        raise ValueError(str(e)) from e
+
+    if not targets:
         return [
             SyncResult(
                 agent_name="System",
@@ -74,26 +119,52 @@ def push(dry_run: bool = False) -> list[SyncResult]:
             )
         ]
 
-    for da in discovered:
+    for agent, path in targets:
         try:
-            data, _ = read_agent_config(da.path, da.agent)
+            if agent.deprecated:
+                logger.warning(
+                    agent.migration_hint or f"Agent '{agent.id}' is deprecated."
+                )
+
+            if not path.exists():
+                data: dict[str, Any] = {}
+            else:
+                data, _ = read_agent_config(path, agent)
+
+            # Probe tools if requested and limit exists
+            if probe_tools and agent.tools_per_server_limit is not None:
+                from mcp_synchro.prober import probe_tool_count
+
+                for name, server in sot.servers.items():
+                    if not server.is_disabled():
+                        tool_count = probe_tool_count(server)
+                        if (
+                            tool_count is not None
+                            and tool_count > agent.tools_per_server_limit
+                        ):
+                            limit = agent.tools_per_server_limit
+                            logger.warning(
+                                f'⚠ {agent.id}: server "{name}" exposes {tool_count} tools — '
+                                f"Antigravity will reject it (hardcoded {limit}-tool cap).\n"
+                                "  Consider splitting the server or using a filtering proxy."
+                            )
 
             if dry_run:
                 results.append(
                     SyncResult(
-                        agent_name=da.agent.name,
-                        path=da.path,
+                        agent_name=agent.name,
+                        path=path,
                         success=True,
                         message=f"Would write {len(sot.servers)} servers (dry run)",
                         servers_count=len(sot.servers),
                     )
                 )
             else:
-                write_agent_config(da.path, data, sot, da.agent)
+                write_agent_config(path, data, sot, agent, resolve_commands)
                 results.append(
                     SyncResult(
-                        agent_name=da.agent.name,
-                        path=da.path,
+                        agent_name=agent.name,
+                        path=path,
                         success=True,
                         message=f"Wrote {len(sot.servers)} servers",
                         servers_count=len(sot.servers),
@@ -103,8 +174,8 @@ def push(dry_run: bool = False) -> list[SyncResult]:
         except PermissionError:
             results.append(
                 SyncResult(
-                    agent_name=da.agent.name,
-                    path=da.path,
+                    agent_name=agent.name,
+                    path=path,
                     success=False,
                     message="Permission denied",
                 )
@@ -112,8 +183,8 @@ def push(dry_run: bool = False) -> list[SyncResult]:
         except Exception as e:
             results.append(
                 SyncResult(
-                    agent_name=da.agent.name,
-                    path=da.path,
+                    agent_name=agent.name,
+                    path=path,
                     success=False,
                     message=str(e),
                 )
@@ -122,32 +193,50 @@ def push(dry_run: bool = False) -> list[SyncResult]:
     return results
 
 
-def pull_new(dry_run: bool = False) -> list[SyncResult]:
-    """Scavenges for new servers the Source of Truth doesn\'t know about yet.
+def pull_new(
+    agents: list[str] | None = None,
+    workspace: str | Path | None = None,
+    dry_run: bool = False,
+) -> list[SyncResult]:
+    """Scavenges for new servers the Source of Truth doesn't know about yet.
 
     If you manually added a server to Cursor, this function finds it and
     adds it to `mcp.json`. Existing servers in `mcp.json` are left untouched.
-
-    Args:
-        dry_run: Look, don\'t touch. Just tell us what new servers you found.
-
-    Returns:
-        A receipt mapping out who provided new servers.
     """
     results: list[SyncResult] = []
     sot = load_sot()
     existing_names = set(sot.servers.keys())
     new_servers: dict[str, Any] = {}
 
-    discovered = _get_discovered_agents()
-    for da in discovered:
+    try:
+        targets = _get_sync_targets(agents, workspace)
+    except ValueError as e:
+        raise ValueError(str(e)) from e
+
+    for agent, path in targets:
         try:
-            _, agent_config = read_agent_config(da.path, da.agent)
+            if agent.deprecated:
+                logger.warning(
+                    agent.migration_hint or f"Agent '{agent.id}' is deprecated."
+                )
+
+            if not path.exists():
+                results.append(
+                    SyncResult(
+                        agent_name=agent.name,
+                        path=path,
+                        success=True,
+                        message="No MCP servers found (config file does not exist)",
+                    )
+                )
+                continue
+
+            _, agent_config = read_agent_config(path, agent)
             if agent_config is None:
                 results.append(
                     SyncResult(
-                        agent_name=da.agent.name,
-                        path=da.path,
+                        agent_name=agent.name,
+                        path=path,
                         success=True,
                         message="No MCP servers found",
                     )
@@ -163,8 +252,8 @@ def pull_new(dry_run: bool = False) -> list[SyncResult]:
             if added:
                 results.append(
                     SyncResult(
-                        agent_name=da.agent.name,
-                        path=da.path,
+                        agent_name=agent.name,
+                        path=path,
                         success=True,
                         message=f"New: {', '.join(added)}",
                         servers_count=len(added),
@@ -173,8 +262,8 @@ def pull_new(dry_run: bool = False) -> list[SyncResult]:
             else:
                 results.append(
                     SyncResult(
-                        agent_name=da.agent.name,
-                        path=da.path,
+                        agent_name=agent.name,
+                        path=path,
                         success=True,
                         message="No new servers",
                     )
@@ -183,8 +272,8 @@ def pull_new(dry_run: bool = False) -> list[SyncResult]:
         except Exception as e:
             results.append(
                 SyncResult(
-                    agent_name=da.agent.name,
-                    path=da.path,
+                    agent_name=agent.name,
+                    path=path,
                     success=False,
                     message=str(e),
                 )
@@ -204,31 +293,44 @@ def pull_new(dry_run: bool = False) -> list[SyncResult]:
     return results
 
 
-def pull_all(dry_run: bool = False) -> list[SyncResult]:
-    """Nukes the Source of Truth and rebuilds it from scratch by reading everyone.
-
-    We walk through every agent config, grab every server, and throw them
-    into a giant pot. If two agents have a server with the same name, the
-    last agent we read wins the fight.
-
-    Args:
-        dry_run: Calculate the new world order, but don\'t commit it to disk.
-
-    Returns:
-        A receipt detailing exactly how many servers we yanked from each agent.
-    """
+def pull_all(
+    agents: list[str] | None = None,
+    workspace: str | Path | None = None,
+    dry_run: bool = False,
+) -> list[SyncResult]:
+    """Nukes the Source of Truth and rebuilds it from scratch by reading everyone."""
     results: list[SyncResult] = []
     all_servers: dict[str, Any] = {}
 
-    discovered = _get_discovered_agents()
-    for da in discovered:
+    try:
+        targets = _get_sync_targets(agents, workspace)
+    except ValueError as e:
+        raise ValueError(str(e)) from e
+
+    for agent, path in targets:
         try:
-            _, agent_config = read_agent_config(da.path, da.agent)
+            if agent.deprecated:
+                logger.warning(
+                    agent.migration_hint or f"Agent '{agent.id}' is deprecated."
+                )
+
+            if not path.exists():
+                results.append(
+                    SyncResult(
+                        agent_name=agent.name,
+                        path=path,
+                        success=True,
+                        message="No MCP servers found (config file does not exist)",
+                    )
+                )
+                continue
+
+            _, agent_config = read_agent_config(path, agent)
             if agent_config is None:
                 results.append(
                     SyncResult(
-                        agent_name=da.agent.name,
-                        path=da.path,
+                        agent_name=agent.name,
+                        path=path,
                         success=True,
                         message="No MCP servers found",
                     )
@@ -242,8 +344,8 @@ def pull_all(dry_run: bool = False) -> list[SyncResult]:
 
             results.append(
                 SyncResult(
-                    agent_name=da.agent.name,
-                    path=da.path,
+                    agent_name=agent.name,
+                    path=path,
                     success=True,
                     message=f"Found {count} servers",
                     servers_count=count,
@@ -253,8 +355,8 @@ def pull_all(dry_run: bool = False) -> list[SyncResult]:
         except Exception as e:
             results.append(
                 SyncResult(
-                    agent_name=da.agent.name,
-                    path=da.path,
+                    agent_name=agent.name,
+                    path=path,
                     success=False,
                     message=str(e),
                 )

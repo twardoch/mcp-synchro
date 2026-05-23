@@ -76,7 +76,9 @@
         "darwin": "~/.claude.json",
         "win32": "%USERPROFILE%/.claude.json",
         "linux": "~/.claude.json"
-      }
+      },
+      "supports_workspace_scope": true,
+      "workspace_config_path": ".mcp.json"
     },
     "claude-desktop": {
       "name": "Claude Desktop",
@@ -154,9 +156,62 @@
         "darwin": "~/.cursor/mcp.json",
         "win32": "%USERPROFILE%/.cursor/mcp.json",
         "linux": "~/.cursor/mcp.json"
-      }
+      },
+      "supports_workspace_scope": true,
+      "workspace_config_path": ".cursor/mcp.json"
     },
-    "gemini-cli": {
+    "antigravity-desktop": {
+      "name": "Antigravity Desktop",
+      "description": "Google Antigravity Standalone Agent Desktop",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.gemini/antigravity/mcp_config.json",
+        "win32": "%USERPROFILE%/.gemini/antigravity/mcp_config.json",
+        "linux": "~/.gemini/antigravity/mcp_config.json"
+      },
+      "remote_url_key": "serverUrl",
+      "auth_header_key": "headers",
+      "transport_indicator": "implicit",
+      "tools_per_server_limit": 100,
+      "supports_workspace_scope": false,
+      "post_write_validate_cmd": null
+    },
+    "antigravity-ide": {
+      "name": "Antigravity IDE",
+      "description": "Google Antigravity IDE Workspace Surface",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.gemini/antigravity-ide/mcp_config.json",
+        "win32": "%USERPROFILE%/.gemini/antigravity-ide/mcp_config.json",
+        "linux": "~/.gemini/antigravity-ide/mcp_config.json"
+      },
+      "remote_url_key": "serverUrl",
+      "auth_header_key": "headers",
+      "transport_indicator": "implicit",
+      "tools_per_server_limit": 100,
+      "supports_workspace_scope": false,
+      "post_write_validate_cmd": null
+    },
+    "antigravity-cli": {
+      "name": "Antigravity CLI (agy)",
+      "description": "Antigravity Terminal User Interface Engine",
+      "config_format": "json",
+      "mcp_key": "mcpServers",
+      "paths": {
+        "darwin": "~/.gemini/antigravity-cli/mcp_config.json",
+        "win32": "%USERPROFILE%/.gemini/antigravity-cli/mcp_config.json",
+        "linux": "~/.gemini/antigravity-cli/mcp_config.json"
+      },
+      "remote_url_key": "serverUrl",
+      "auth_header_key": "headers",
+      "transport_indicator": "implicit",
+      "tools_per_server_limit": 100,
+      "supports_workspace_scope": false,
+      "post_write_validate_cmd": ["agy", "mcp", "list"]
+    },
+    "gemini": {
       "name": "Gemini CLI",
       "description": "Google Gemini CLI",
       "config_format": "json",
@@ -165,7 +220,14 @@
         "darwin": "~/.gemini/settings.json",
         "win32": "%USERPROFILE%/.gemini/settings.json",
         "linux": "~/.gemini/settings.json"
-      }
+      },
+      "remote_url_key": "httpUrl",
+      "auth_header_key": "headers",
+      "transport_indicator": "key-choice",
+      "deprecated": true,
+      "deprecated_after": "2026-06-18",
+      "successor": "antigravity-cli",
+      "migration_hint": "Google retires Gemini CLI on 2026-06-18; a backup snapshot is written to ~/.gemini/antigravity-backup/. Run `mcp-synchro migrate gemini --to antigravity-cli`."
     },
     "jan": {
       "name": "Jan",
@@ -388,7 +450,9 @@
         "darwin": "~/.vscode/mcp.json",
         "win32": "%APPDATA%/Code/User/mcp.json",
         "linux": "~/.vscode/mcp.json"
-      }
+      },
+      "supports_workspace_scope": true,
+      "workspace_config_path": ".vscode/mcp.json"
     },
     "vscode-insiders": {
       "name": "VS Code Insiders",

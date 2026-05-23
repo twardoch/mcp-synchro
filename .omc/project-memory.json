@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777046712449,
+  "lastScanned": 1779542244187,
   "projectRoot": "/Users/adam/Developer/vcs3/github.twardoch/pub/mcp-synchro",
   "techStack": {
     "languages": [
@@ -54,7 +54,7 @@
       "path": "_private",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1777046712444,
+      "lastAccessed": 1779542244182,
       "keyFiles": [
         "Untitled",
         "llmgrade"
@@ -64,34 +64,37 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 2,
-      "lastAccessed": 1777046712444,
+      "lastAccessed": 1779542244182,
       "keyFiles": [
-        "mcp_synchro-1.0.3.dev1+gdceb93ea1-py3-none-any.whl",
-        "mcp_synchro-1.0.3.dev1+gdceb93ea1.tar.gz"
+        "mcp_synchro-1.0.4-py3-none-any.whl",
+        "mcp_synchro-1.0.4.tar.gz"
       ]
     },
     "issues": {
       "path": "issues",
       "purpose": null,
-      "fileCount": 2,
-      "lastAccessed": 1777046712444,
+      "fileCount": 5,
+      "lastAccessed": 1779542244183,
       "keyFiles": [
         "101.md",
-        "102.md"
+        "102.md",
+        "103.md",
+        "104.md",
+        "105.md"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1777046712444,
+      "lastAccessed": 1779542244183,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 2,
-      "lastAccessed": 1777046712444,
+      "lastAccessed": 1779542244183,
       "keyFiles": [
         "__init__.py",
         "test_all.py"

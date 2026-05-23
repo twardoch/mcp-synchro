@@ -1139,3 +1139,275 @@ class TestSync:
 
         data = json.loads(sot_path.read_text())
         assert "s1" in data["mcpServers"]
+
+
+class TestMay2026EcosystemUpgrade:
+    def test_antigravity_desktop_writes_serverUrl(self):
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.writers import update_mcp_servers
+
+        agent = AgentDef(
+            id="antigravity-desktop",
+            name="Antigravity Desktop",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={},
+            remote_url_key="serverUrl",
+            transport_indicator="implicit",
+        )
+        sot = McpServersConfig(
+            servers={"test": McpServer(url="https://example.com/sse", transport="http")}
+        )
+        res = update_mcp_servers({}, sot, agent)
+        assert "mcpServers" in res
+        assert "test" in res["mcpServers"]
+        assert res["mcpServers"]["test"].get("serverUrl") == "https://example.com/sse"
+        assert "url" not in res["mcpServers"]["test"]
+
+    def test_antigravity_paths_per_platform(self):
+        from mcp_synchro.agents import load_all_agent_defs
+
+        defs = {a.id: a for a in load_all_agent_defs()}
+
+        desktop = defs["antigravity-desktop"]
+        assert desktop.paths["darwin"] == "~/.gemini/antigravity/mcp_config.json"
+        assert (
+            desktop.paths["win32"]
+            == "%USERPROFILE%/.gemini/antigravity/mcp_config.json"
+        )
+        assert desktop.paths["linux"] == "~/.gemini/antigravity/mcp_config.json"
+
+        ide = defs["antigravity-ide"]
+        assert ide.paths["darwin"] == "~/.gemini/antigravity-ide/mcp_config.json"
+        assert (
+            ide.paths["win32"]
+            == "%USERPROFILE%/.gemini/antigravity-ide/mcp_config.json"
+        )
+        assert ide.paths["linux"] == "~/.gemini/antigravity-ide/mcp_config.json"
+
+        cli = defs["antigravity-cli"]
+        assert cli.paths["darwin"] == "~/.gemini/antigravity-cli/mcp_config.json"
+        assert (
+            cli.paths["win32"]
+            == "%USERPROFILE%/.gemini/antigravity-cli/mcp_config.json"
+        )
+        assert cli.paths["linux"] == "~/.gemini/antigravity-cli/mcp_config.json"
+
+    def test_cursor_never_emits_streamable_http(self):
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.writers import update_mcp_servers
+
+        agent = AgentDef(
+            id="cursor",
+            name="Cursor",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={},
+            remote_url_key="url",
+            transport_indicator="explicit",
+        )
+        sot = McpServersConfig(
+            servers={
+                "test": McpServer(
+                    url="https://example.com/sse", transport="streamable-http"
+                )
+            }
+        )
+        res = update_mcp_servers({}, sot, agent)
+        assert res["mcpServers"]["test"].get("type") == "http"
+        assert "transport" not in res["mcpServers"]["test"]
+
+    def test_codex_uses_mcp_servers_table(self):
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.writers import update_mcp_servers
+
+        agent = AgentDef(
+            id="codex",
+            name="Codex CLI",
+            description="",
+            config_format="toml",
+            mcp_key="mcp_servers",
+            paths={},
+        )
+        sot = McpServersConfig(
+            servers={
+                "test": McpServer(
+                    url="https://example.com/sse", bearerTokenEnvVar="MY_TOKEN"
+                )
+            }
+        )
+        res = update_mcp_servers({}, sot, agent)
+        assert "mcp_servers" in res
+        assert "test" in res["mcp_servers"]
+        assert res["mcp_servers"]["test"].get("bearer_token_env_var") == "MY_TOKEN"
+
+    def test_gemini_deprecated_warning(self):
+        from unittest.mock import patch
+
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.sync import push
+
+        agent = AgentDef(
+            id="gemini",
+            name="Gemini CLI",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={"darwin": "/tmp/nonexistent-test-path-dep"},
+            deprecated=True,
+            deprecated_after="2026-06-18",
+            migration_hint="migration Hint Text",
+        )
+        sot = McpServersConfig(servers={"test": McpServer(command="echo")})
+
+        with (
+            patch("mcp_synchro.sync.load_sot", return_value=sot),
+            patch(
+                "mcp_synchro.sync._get_sync_targets",
+                return_value=[(agent, Path("/tmp/nonexistent-test-path-dep"))],
+            ),
+            patch("mcp_synchro.sync.write_agent_config"),
+            patch("loguru.logger.warning") as mock_warn,
+        ):
+            push(agents=["gemini"], dry_run=False)
+            mock_warn.assert_any_call("migration Hint Text")
+
+    def test_opencode_command_array_and_environment(self):
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.writers import update_mcp_servers
+
+        agent = AgentDef(
+            id="opencode",
+            name="OpenCode",
+            description="",
+            config_format="json",
+            mcp_key="mcp",
+            paths={},
+            command_as_array=True,
+        )
+        sot = McpServersConfig(
+            servers={"test": McpServer(command="node index.js", env={"PORT": "3000"})}
+        )
+        res = update_mcp_servers({}, sot, agent)
+        assert "mcp" in res
+        assert "test" in res["mcp"]
+        assert res["mcp"]["test"]["command"] == ["node index.js"]
+        assert res["mcp"]["test"]["environment"] == {"PORT": "3000"}
+        assert "env" not in res["mcp"]["test"]
+        assert res["mcp"]["test"]["type"] == "local"
+
+    def test_antigravity_workspace_rejected(self):
+        from mcp_synchro.sync import push
+
+        with pytest.raises(ValueError) as excinfo:
+            push(agents=["antigravity-desktop"], workspace="/tmp/proj")
+        assert "does not support workspace-level MCP config" in str(excinfo.value)
+
+    def test_darwin_gui_command_resolution(self):
+        from unittest.mock import patch
+
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.writers import update_mcp_servers
+
+        agent = AgentDef(
+            id="antigravity-desktop",
+            name="Antigravity Desktop",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={},
+        )
+        sot = McpServersConfig(
+            servers={"test": McpServer(command="npx", args=["-y", "some-tool"])}
+        )
+
+        with (
+            patch("sys.platform", "darwin"),
+            patch("shutil.which", return_value="/usr/local/bin/npx"),
+        ):
+            res = update_mcp_servers({}, sot, agent, resolve_commands=True)
+            assert res["mcpServers"]["test"]["command"] == "/usr/local/bin/npx"
+
+    def test_pull_normalizes_serverUrl_to_url(self):
+        from mcp_synchro.models import McpServer
+
+        s1 = McpServer.model_validate({"serverUrl": "https://example.com/sse"})
+        assert s1.url == "https://example.com/sse"
+        assert s1.serverUrl is None
+
+        s2 = McpServer.model_validate({"httpUrl": "https://example.com/http"})
+        assert s2.url == "https://example.com/http"
+        assert s2.httpUrl is None
+
+    def test_migrate_gemini_to_agy(self, tmp_path: Path):
+        from unittest.mock import patch
+
+        from mcp_synchro.cli import McpSynchroCLI
+
+        legacy_file = tmp_path / "settings.json"
+        legacy_file.write_text(
+            json.dumps(
+                {
+                    "mcpServers": {
+                        "atlassian": {
+                            "httpUrl": "https://mcp.atlassian.com/v1/sse",
+                            "headers": {"Authorization": "Bearer ATLASSIAN_TOKEN"},
+                        }
+                    }
+                }
+            )
+        )
+
+        target_file = tmp_path / "mcp_config.json"
+
+        from mcp_synchro.agents import AgentDef
+
+        legacy_agent = AgentDef(
+            id="gemini",
+            name="Gemini CLI",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={"darwin": str(legacy_file)},
+        )
+        target_agent = AgentDef(
+            id="antigravity-cli",
+            name="Antigravity CLI (agy)",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={"darwin": str(target_file)},
+            remote_url_key="serverUrl",
+            transport_indicator="implicit",
+        )
+
+        with (
+            patch(
+                "mcp_synchro.cli.load_all_agent_defs",
+                return_value=[legacy_agent, target_agent],
+            ),
+            patch(
+                "mcp_synchro.agents.load_all_agent_defs",
+                return_value=[legacy_agent, target_agent],
+            ),
+        ):
+            cli = McpSynchroCLI()
+            cli.migrate("gemini", to="antigravity-cli")
+
+        assert target_file.exists()
+        data = json.loads(target_file.read_text())
+        assert "mcpServers" in data
+        assert "atlassian" in data["mcpServers"]
+        assert (
+            data["mcpServers"]["atlassian"]["serverUrl"]
+            == "https://mcp.atlassian.com/v1/sse"
+        )
+        assert legacy_file.with_suffix(".backup").exists()

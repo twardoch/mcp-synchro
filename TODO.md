@@ -1,0 +1,49 @@
+# TODO List - mcp-synchro Upgrade for May 2026 Ecosystem
+
+- [x] Update `src/mcp_synchro/agents.json`
+  - [x] Add `antigravity-desktop` configuration
+  - [x] Add `antigravity-ide` configuration
+  - [x] Add `antigravity-cli` configuration
+  - [x] Mark `gemini` as deprecated and configure migration successor / hint
+- [x] Update `src/mcp_synchro/agents.py`
+  - [x] Add new configuration fields to `AgentDef` class
+  - [x] Update `parse_agent_defs` to read these new fields from the JSON definitions
+- [x] Update `src/mcp_synchro/models.py`
+  - [x] Add security fields (headers, authProviderType, oauth) to `McpServer` if missing
+  - [x] Add transport field validation and normalization (e.g. `streamable-http` to `http` for SoT)
+  - [x] Add cross-field validation to canonicalize `serverUrl` / `httpUrl` to `url` in SoT
+- [x] Update `src/mcp_synchro/writers.py`
+  - [x] Create `_normalize_for_agent` to transform servers to agent-specific formats
+  - [x] Implement `serverUrl` normalization for `antigravity-*` and `windsurf`
+  - [x] Implement `httpUrl` normalization for `gemini` and `qwen`
+  - [x] Implement Cursor `streamable-http` -> `http` override to prevent silent failures
+  - [x] Implement Codex TOML mapping (`[mcp_servers."name"]` snake_case)
+  - [x] Implement OpenCode cmd array and environment injection
+  - [x] Implement macOS GUI command path resolution (`shutil.which` helper) for `antigravity-desktop` and `antigravity-ide`
+- [x] Update `src/mcp_synchro/readers.py`
+  - [x] Implement symmetric inverse normalization when pulling configs (convert `serverUrl`/`httpUrl` to standard `url`/`transport`)
+  - [x] Add warning/validation for unrecognized keys
+- [x] Create `src/mcp_synchro/prober.py` for tool-limit verification
+  - [x] Implement stdio prober using JSON-RPC handshake (`initialize` -> `tools/list`)
+  - [x] Guard prober with timeout and support platform safety (exclude Windows `select` call)
+- [x] Update `src/mcp_synchro/sync.py`
+  - [x] Support agent list filters in `push`, `pull_new`, and `pull_all`
+  - [x] Warn or error on deprecated agents during sync operations
+  - [x] Add tool count probing during `push` when `--probe-tools` is requested
+- [x] Update `src/mcp_synchro/cli.py`
+  - [x] Update argument definitions for `push`, `pull_new`, `pull_all` to accept `--probe-tools`, `--no-resolve-commands`, `--validate`, and agent list
+  - [x] Implement `migrate` command to safely migrate deprecated configs (e.g., `gemini` -> `antigravity-cli`)
+  - [x] Implement `doctor` command to run post-write validation commands and report status
+  - [x] Implement `agy-sync` command as a shortcut targeting the 3 Antigravity products
+- [x] Add new tests to `tests/test_all.py`
+  - [x] `test_antigravity_desktop_writes_serverUrl`
+  - [x] `test_antigravity_paths_per_platform`
+  - [x] `test_cursor_never_emits_streamable_http`
+  - [x] `test_codex_uses_mcp_servers_table`
+  - [x] `test_gemini_deprecated_warning`
+  - [x] `test_opencode_command_array_and_environment`
+  - [x] `test_antigravity_workspace_rejected`
+  - [x] `test_darwin_gui_command_resolution`
+  - [x] `test_pull_normalizes_serverUrl_to_url`
+  - [x] `test_migrate_gemini_to_agy`
+- [x] Update `README.md` to reflect new capabilities and the May 2026 ecosystems
