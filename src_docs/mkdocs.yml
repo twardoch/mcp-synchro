@@ -1,0 +1,127 @@
+# this_file: src_docs/mkdocs.yml
+
+site_name: mcp-synchro Documentation
+site_description: Synchronize MCP server configurations across 40+ AI agents
+site_author: Adam Twardoch
+site_url: https://twardoch.github.io/mcp-synchro
+
+repo_name: twardoch/mcp-synchro
+repo_url: https://github.com/twardoch/mcp-synchro
+edit_uri: edit/main/src_docs/md/
+
+copyright: Copyright &copy; 2025–2026 Adam Twardoch
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - search.highlight
+    - search.share
+    - search.suggest
+    - header.autohide
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    logo: material/sync
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      separator: '[\s​\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/twardoch/mcp-synchro
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/mcp-synchro/
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - Supported Agents: supported-agents.md
+    - Config Format Reference: config-format.md
+    - Path Template Expansion: path-templates.md
+  - Contributing: style-guide.md
+
+# Build to docs/ so GitHub Pages serves it directly
+site_dir: ../docs
+
+watch:
+  - md/
+  - ../src/mcp_synchro/

@@ -227,7 +227,21 @@ class McpServer(BaseModel):
 
 
 def _camel_to_snake(name: str) -> str:
-    """Turns `camelCase` into `snake_case`."""
+    """Turns ``camelCase`` into ``snake_case``.
+
+    Used when writing to Codex CLI (the only agent that uses TOML + snake_case field names).
+    All other agents speak JSON with camelCase keys, so conversion is a no-op for them.
+
+    Rule: insert an underscore before every uppercase character that is not at position 0,
+    then lower-case the whole string.  The conversion is bijective for the MCP field names
+    used in practice (alwaysAllow, bearerTokenEnvVar, httpHeaders …).
+
+    Examples::
+
+        _camel_to_snake("mcpServers")        → "mcp_servers"
+        _camel_to_snake("bearerTokenEnvVar") → "bearer_token_env_var"
+        _camel_to_snake("command")           → "command"   # unchanged: no capitals
+    """
     result: list[str] = []
     for i, char in enumerate(name):
         if char.isupper() and i > 0:
@@ -237,7 +251,21 @@ def _camel_to_snake(name: str) -> str:
 
 
 def _snake_to_camel(name: str) -> str:
-    """Turns `snake_case` into `camelCase`."""
+    """Turns ``snake_case`` into ``camelCase``.
+
+    Used when reading from Codex CLI TOML — converts Codex's snake_case field names back
+    into the camelCase that the ``McpServer`` Pydantic model and all other agents expect.
+
+    Rule: split on underscores, keep the first part as-is, capitalize the first letter of
+    every subsequent part.  The conversion is the exact inverse of ``_camel_to_snake`` for
+    the field names used in practice.
+
+    Examples::
+
+        _snake_to_camel("mcp_servers")          → "mcpServers"
+        _snake_to_camel("bearer_token_env_var") → "bearerTokenEnvVar"
+        _snake_to_camel("command")              → "command"   # unchanged: no underscores
+    """
     parts = name.split("_")
     return parts[0] + "".join(p.capitalize() for p in parts[1:])
 

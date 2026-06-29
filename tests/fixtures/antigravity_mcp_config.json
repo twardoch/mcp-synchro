@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "remote-server": {
+      "serverUrl": "https://mcp.example.com/v1/sse",
+      "headers": { "Authorization": "Bearer MY_TOKEN" },
+      "trust": true
+    },
+    "local-python": {
+      "command": "/usr/local/bin/uvx",
+      "args": ["some-mcp-server@latest"],
+      "env": { "MY_API_KEY": "key-abc123" }
+    }
+  }
+}

@@ -58,14 +58,39 @@ class AgentDef:
     def resolve_path(self) -> Path | None:
         """Turns a path template into a real, absolute path.
 
-        Expands `~` on Unix and `%APPDATA%` or `%USERPROFILE%` on Windows.
-        Returns None if we don\'t know where this agent lives on this OS.
+        Path templates in ``agents.json`` use two placeholder conventions:
+
+        * **Unix / macOS**: ``~`` at the start of the path is expanded to the current user's
+          home directory via ``pathlib.Path.expanduser()``.  Example::
+
+              "~/.config/mcp-synchro/mcp.json"
+              → /home/alice/.config/mcp-synchro/mcp.json
+
+        * **Windows**: ``%APPDATA%``, ``%USERPROFILE%``, and ``%LOCALAPPDATA%`` placeholders
+          are replaced with the corresponding environment variables *before* ``expanduser()``
+          is called.  Only these three variables are expanded; arbitrary ``%VAR%`` tokens are
+          left intact.  Example::
+
+              "%APPDATA%/mcp-synchro/mcp.json"
+              → C:\\Users\\Alice\\AppData\\Roaming\\mcp-synchro\\mcp.json
+
+        Note that the *Source of Truth* file (``mcp.json``) and the user agent-override file
+        (``mcp-synchro.json``) are **not** located via a template here — they use
+        ``platformdirs.user_config_dir("mcp-synchro")`` inside ``config.py`` instead.
+        platformdirs picks the OS-correct directory (e.g. ``~/Library/Application Support``
+        on macOS, ``~/.config`` on Linux, ``%APPDATA%`` on Windows) without any explicit
+        platform check.
+
+        Returns:
+            Absolute ``Path`` for the agent's config file on this OS, or ``None`` if no
+            entry exists for the current platform in ``self.paths``.
         """
         template = self.get_path_template()
         if template is None:
             return None
 
-        # Expand environment variables on Windows
+        # Windows-only: expand %APPDATA%, %USERPROFILE%, %LOCALAPPDATA% before expanduser().
+        # We only expand these three because they are the conventional Windows config roots.
         if sys.platform == "win32":
             for var in ("APPDATA", "USERPROFILE", "LOCALAPPDATA"):
                 placeholder = f"%{var}%"
@@ -73,7 +98,7 @@ class AgentDef:
                     env_val = os.environ.get(var, "")
                     template = template.replace(placeholder, env_val)
 
-        # Expand ~ for home directory
+        # Expand ~ to the home directory on all platforms (no-op on Windows after the above).
         path = Path(template).expanduser()
         return path
 

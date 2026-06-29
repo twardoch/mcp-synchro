@@ -1411,3 +1411,96 @@ class TestMay2026EcosystemUpgrade:
             == "https://mcp.atlassian.com/v1/sse"
         )
         assert legacy_file.with_suffix(".backup").exists()
+
+    def test_antigravity_pinned_fixture_normalizes_serverUrl(self):
+        """Pinned fixture: Antigravity mcp_config.json format as of 2026-06-18 (Antigravity 2.0 GA).
+
+        Antigravity uses ``serverUrl`` for remote servers instead of the canonical ``url``.
+        Our reader must normalize ``serverUrl`` -> ``url`` on import so the SoT stays
+        format-agnostic.  The fixture is pinned at the Antigravity 2.0 release format.
+        """
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.readers import read_agent_config
+
+        fixture = Path(__file__).parent / "fixtures" / "antigravity_mcp_config.json"
+        assert fixture.exists(), f"Pinned fixture missing: {fixture}"
+
+        agent = AgentDef(
+            id="antigravity-desktop",
+            name="Antigravity Desktop",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={},
+            remote_url_key="serverUrl",
+            transport_indicator="implicit",
+        )
+        _data, config = read_agent_config(fixture, agent)
+        assert config is not None, "Expected MCP servers to be parsed from fixture"
+
+        # remote-server: serverUrl must be canonicalized to .url in our model
+        assert "remote-server" in config.servers
+        srv = config.servers["remote-server"]
+        assert srv.url == "https://mcp.example.com/v1/sse", (
+            f"Expected url canonicalized from serverUrl, got url={srv.url!r}"
+        )
+        assert srv.serverUrl is None, "serverUrl field must be cleared after canonicalization"
+
+        # local-python: stdio server passes through unchanged
+        assert "local-python" in config.servers
+        local = config.servers["local-python"]
+        assert local.command == "/usr/local/bin/uvx"
+        assert local.args == ["some-mcp-server@latest"]
+        assert local.env == {"MY_API_KEY": "key-abc123"}
+
+    def test_probe_tools_100_cap_guard_when_over_limit_then_warns(self, tmp_path: Path):
+        """The 100-tool cap guard fires a warning when a server exposes more than 100 tools.
+
+        Added 2026-06-18.  Antigravity has a hardcoded 100-tool-per-server limit and will
+        silently reject servers that exceed it.  When ``probe_tools=True`` is passed to
+        ``push()``, mcp-synchro performs a JSON-RPC handshake to count each server's exposed
+        tools and calls ``logger.warning`` when the cap would be exceeded, giving the user a
+        chance to split or proxy the server before the push lands.
+        """
+        from unittest.mock import patch
+
+        from mcp_synchro.agents import AgentDef
+        from mcp_synchro.models import McpServer, McpServersConfig
+        from mcp_synchro.sync import push
+
+        config_file = tmp_path / "mcp_config.json"
+        config_file.write_text(json.dumps({"mcpServers": {}}))
+
+        agent = AgentDef(
+            id="antigravity-desktop",
+            name="Antigravity Desktop",
+            description="",
+            config_format="json",
+            mcp_key="mcpServers",
+            paths={"darwin": str(config_file)},
+            tools_per_server_limit=100,
+        )
+        sot = McpServersConfig(
+            servers={
+                "big-server": McpServer(command="npx", args=["-y", "huge-mcp-server"])
+            }
+        )
+
+        with (
+            patch("mcp_synchro.sync.load_sot", return_value=sot),
+            patch(
+                "mcp_synchro.sync._get_sync_targets",
+                return_value=[(agent, config_file)],
+            ),
+            # probe_tool_count is imported lazily inside push(); patching the module
+            # attribute ensures the lazy import picks up the mock.
+            patch("mcp_synchro.prober.probe_tool_count", return_value=101),
+            patch("loguru.logger.warning") as mock_warn,
+        ):
+            push(agents=["antigravity-desktop"], dry_run=False, probe_tools=True)
+
+        warning_texts = [str(c) for c in mock_warn.call_args_list]
+        assert any(
+            "100" in t or "tool" in t.lower() or "cap" in t.lower()
+            for t in warning_texts
+        ), f"Expected a 100-tool-cap warning but got: {warning_texts}"

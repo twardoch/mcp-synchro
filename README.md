@@ -1,5 +1,9 @@
 # mcp-synchro
 
+[![CI](https://github.com/twardoch/mcp-synchro/actions/workflows/ci.yml/badge.svg)](https://github.com/twardoch/mcp-synchro/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/mcp-synchro)](https://pypi.org/project/mcp-synchro/)
+[![Python](https://img.shields.io/pypi/pyversions/mcp-synchro)](https://pypi.org/project/mcp-synchro/)
+
 One config file. Every AI agent. Synced.
 
 Keep your MCP (Model Context Protocol) server list in a single master file and push it to Claude Desktop, Cursor, Codex CLI, Gemini CLI, VS Code, Windsurf, Cline, Roo, and 15+ more — all at once.
@@ -112,7 +116,11 @@ The master config file lives at the OS-appropriate user config directory (e.g. `
 
 ## Supported agents
 
-Claude Desktop, Cursor, VS Code (Copilot), Windsurf, Cline, Roo Code, Codex CLI, Gemini CLI, OpenCode, 5ire, Jan, Qwen Chat, Crush, and more. Agent definitions live in a bundled JSON file and can be extended with a local override.
+41 agents including Claude Desktop, Cursor, VS Code (Copilot), Windsurf, Cline, Roo Code,
+Codex CLI, Antigravity (Desktop, IDE, CLI), OpenCode, 5ire, Jan, Qwen Code, Crush, and more.
+Full table with config formats, key names, and platform paths: see [Supported Agents](https://twardoch.github.io/mcp-synchro/supported-agents/) in the docs.
+
+Agent definitions live in a bundled JSON file and can be extended with a local override.
 
 ## Config format
 
@@ -139,6 +147,14 @@ When pushing to Codex CLI (which uses TOML), `mcp-synchro` automatically convert
 
 Only the MCP servers section of each agent's config is touched. Claude Desktop's `globalShortcut`, Cursor's UI settings, VS Code's extension preferences — none of that is read or written.
 
+## Documentation
+
+Full docs at **[twardoch.github.io/mcp-synchro](https://twardoch.github.io/mcp-synchro/)**:
+
+- [Supported Agents](https://twardoch.github.io/mcp-synchro/supported-agents/) — all 41 agents with config formats and path templates
+- [Config Format Reference](https://twardoch.github.io/mcp-synchro/config-format/) — McpServer fields, agent-specific mappings, camelCase ↔ snake_case
+- [Path Template Expansion](https://twardoch.github.io/mcp-synchro/path-templates/) — `~`, `%APPDATA%`, and platformdirs
+
 ## License
 
-MIT
+Apache-2.0
