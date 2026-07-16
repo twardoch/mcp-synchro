@@ -1444,7 +1444,9 @@ class TestMay2026EcosystemUpgrade:
         assert srv.url == "https://mcp.example.com/v1/sse", (
             f"Expected url canonicalized from serverUrl, got url={srv.url!r}"
         )
-        assert srv.serverUrl is None, "serverUrl field must be cleared after canonicalization"
+        assert srv.serverUrl is None, (
+            "serverUrl field must be cleared after canonicalization"
+        )
 
         # local-python: stdio server passes through unchanged
         assert "local-python" in config.servers
