@@ -125,3 +125,6 @@ site_dir: ../docs
 watch:
   - md/
   - ../src/mcp_synchro/
+
+# Sources live next to this configuration under md/.
+docs_dir: md
